@@ -53,6 +53,12 @@ This repository contains a Bash script that processes the Linux `wtmp` file and 
    SELECT * FROM uptime;
    ```
 
+   The following SQL query enhances the uptime table by adding a new column, dow (day of the week), derived from an external reference in the days_of_week table:
+
+   ```sql
+   SELECT date, (SELECT dow FROM days_of_week WHERE date = uptime.date) AS dow, uptime_perday FROM uptime WHERE date = '2023-10-01';
+   ```
+
 ## Views
 
 Several views have been created in the SQLite database:
