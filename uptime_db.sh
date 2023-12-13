@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Version information
+SCRIPT_VERSION="0.1.0"
+
 bin_to_txt() {
     utmpdump /var/log/wtmp 2> /dev/null;
 }
