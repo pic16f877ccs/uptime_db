@@ -23,7 +23,8 @@ embedded_views() {
     "CREATE VIEW IF NOT EXISTS on_counts AS SELECT date, COUNT(type) AS turn_ons FROM wtmp WHERE type = 'reboot' GROUP BY date;"\
     "CREATE VIEW IF NOT EXISTS total_uptime AS SELECT date || ' to ' || (SELECT date FROM wtmp ORDER BY id DESC LIMIT 1) AS\
     'date_range', (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS 'total_uptime' FROM wtmp;"\
-    "CREATE VIEW days_of_week AS SELECT date, (SELECT dow FROM day_of_week WHERE id = CAST(strftime('%u', wtmp.date) AS INTEGER)) AS dow FROM wtmp;"\
+    "CREATE VIEW IF NOT EXISTS days_of_week AS SELECT date, (SELECT dow FROM day_of_week WHERE id = CAST(strftime('%u', wtmp.date) AS INTEGER)) AS\
+    dow FROM wtmp;"\
     "CREATE VIEW IF NOT EXISTS uptime_rank_january AS SELECT date, (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS total_uptime, ROW_NUMBER() OVER(ORDER BY SUM(uptime) DESC) AS uptime_rank FROM wtmp WHERE date LIKE '2023-01-%' GROUP BY date;"\
     "CREATE VIEW IF NOT EXISTS uptime_rank_february AS SELECT date, (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS total_uptime, ROW_NUMBER() OVER(ORDER BY SUM(uptime) DESC) AS uptime_rank FROM wtmp WHERE date LIKE '2023-02-%' GROUP BY date;"\
     "CREATE VIEW IF NOT EXISTS uptime_rank_march AS SELECT date, (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS total_uptime, ROW_NUMBER() OVER(ORDER BY SUM(uptime) DESC) AS uptime_rank FROM wtmp WHERE date LIKE '2023-03-%' GROUP BY date;"\
