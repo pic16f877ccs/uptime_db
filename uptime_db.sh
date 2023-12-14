@@ -1,7 +1,10 @@
 #!/bin/bash
-
+#
+# The bash script creates a SQLite3 database using data, date and time (reboot, shutdown) from /var/log/wtmp
+#
 # Version information
 SCRIPT_VERSION="0.1.0"
+#
 
 bin_to_txt() {
     utmpdump /var/log/wtmp 2> /dev/null;
