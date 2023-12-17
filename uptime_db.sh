@@ -3,8 +3,29 @@
 # The bash script creates a SQLite3 database using data, date and time (reboot, shutdown) from /var/log/wtmp
 #
 # Version information
-SCRIPT_VERSION="0.1.1"
+SCRIPT_VERSION="0.2.0"
 #
+show_help() {
+cat <<_EOF_
+Usage: ./uptime_db [-hveu]
+-h,    -help,           --help                    Display help
+_EOF_
+}
+#
+options=$(getopt -l "help" -o "h" -a -- "$@")
+#
+eval set -- "$options"
+# 
+#echo "$#"
+#
+for var in "$@"
+do 
+    if [ '--help' = "$var" -o '-help' = "$var" -o '-h' = "$var" ]; then
+        show_help;
+        exit 0;
+    fi
+done
+# 
 
 bin_to_txt() {
     utmpdump /var/log/wtmp 2> /dev/null;
