@@ -5,17 +5,19 @@
 # Version information
 SCRIPT_VERSION="0.2.0"
 errors_flag=0;
+show_all_tables_flag=0;
 #
 show_help() {
 cat <<_EOF_
-Usage: ./uptime_db [-hv]
+Usage: ./uptime_db [-h | -v] [-et]
 -e,    -errors,         --errors                  Show all errors
 -h,    -help,           --help                    Display help
+-t,    -tables,         --tables                  Display tables and views
 -v,    -version,        --version                 Show version
 _EOF_
 }
 #
-options=$(getopt -l "errors,help,version" -o "ehv" -a -- "$@")
+options=$(getopt -l "errors,help,tables,version" -o "ehtv" -a -- "$@")
 #
 eval set -- "$options"
 #
@@ -45,6 +47,9 @@ do
 case "$1" in
 -e|--errors)
     errors_flag=1;
+    ;;
+-t|--tables)
+    show_all_tables_flag=1;
     ;;
 --)
     shift
@@ -113,5 +118,9 @@ if [ "$errors_flag" -eq 1 ]; then
     bin_to_txt_err | parse_csv | create_db_import
 else
     bin_to_txt | parse_csv | create_db_import
+fi
+#
+if [ "$show_all_tables_flag" -eq 1 ]; then
+    sqlite3 wtmp.db3 <<<"PRAGMA table_list";
 fi
 #
