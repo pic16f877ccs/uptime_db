@@ -4,20 +4,20 @@
 #
 # Version information
 SCRIPT_VERSION="0.2.0"
+errors_flag=0;
 #
 show_help() {
 cat <<_EOF_
 Usage: ./uptime_db [-hv]
+-e,    -errors,         --errors                  Show all errors
 -h,    -help,           --help                    Display help
 -v,    -version,        --version                 Show version
 _EOF_
 }
 #
-options=$(getopt -l "help,version" -o "hv" -a -- "$@")
+options=$(getopt -l "errors,help,version" -o "ehv" -a -- "$@")
 #
 eval set -- "$options"
-# 
-#echo "$#"
 #
 for var in "$@"
 do 
@@ -40,16 +40,32 @@ do
     fi
 done
 # 
-
+while true
+do
+case "$1" in
+-e|--errors)
+    errors_flag=1;
+    ;;
+--)
+    shift
+    break;;
+esac
+shift
+done
+#
 bin_to_txt() {
     utmpdump /var/log/wtmp 2> /dev/null;
 }
-
+#
+bin_to_txt_err() {
+    utmpdump /var/log/wtmp;
+}
+#
 parse_csv() {
     sed -nE -e 's/^.*(shutdown|reboot).*([0-9]{4}-[0-9]{2}-[0-9]{2})T(.*),.*$/\1,\2 \3,\2,\3/gp' |\
     sed -E -e '1{/^shutdown,[0-9]{4}(-[0-9][0-9]){2} [0-9]{2}(:[0-9][0-9]){2},[0-9]{4}(-[0-9][0-9]){2},[0-9]{2}(:[0-9][0-9]){2}$/d}';
 }
-
+#
 embedded_views() {
     sqlite3 wtmp.db3\
     "CREATE VIEW IF NOT EXISTS uptime AS SELECT date,\
@@ -73,7 +89,7 @@ embedded_views() {
     "CREATE VIEW IF NOT EXISTS uptime_rank_november AS SELECT date, (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS total_uptime, ROW_NUMBER() OVER(ORDER BY SUM(uptime) DESC) AS uptime_rank FROM wtmp WHERE date LIKE '2023-11-%' GROUP BY date;"\
     "CREATE VIEW IF NOT EXISTS uptime_rank_december AS SELECT date, (SUM(uptime) / 60 / 60 / 24) || 'd ' || strftime('%Hh %mm %Ss', SUM(uptime), 'unixepoch') AS total_uptime, ROW_NUMBER() OVER(ORDER BY SUM(uptime) DESC) AS uptime_rank FROM wtmp WHERE date LIKE '2023-12-%' GROUP BY date;"
 }
-
+#
 create_db_import() {
     sqlite3 wtmp.db3\
         "CREATE TEMP TABLE IF NOT EXISTS tmp(type TEXT NOT NULL, datetime TEXT NOT NULL UNIQUE, date TEXT NOT NULL, time TEXT);"\
@@ -85,12 +101,17 @@ create_db_import() {
         "INSERT INTO day_of_week (id, dow) VALUES(1, 'monday'), (2, 'tuesday'), (3, 'wednesday'), (4, 'thursday'), (5, 'friday'), (6, 'saturday'), (7, 'sunday') ON CONFLICT DO NOTHING;"
     embedded_views;
 }
-
+#
 import_update_tb() {
     sqlite3 wtmp.db3\
     "CREATE TEMP TABLE IF NOT EXISTS tmp(type TEXT NOT NULL, datetime TEXT NOT NULL UNIQUE, date TEXT NOT NULL, time TEXT);"\
     ".import --csv /dev/stdin tmp"\
     "INSERT OR IGNORE INTO wtmp(type, datetime, date, time) SELECT type, datetime, date, time FROM tmp;"
 }
-
-bin_to_txt | parse_csv | create_db_import
+#
+if [ "$errors_flag" -eq 1 ]; then
+    bin_to_txt_err | parse_csv | create_db_import
+else
+    bin_to_txt | parse_csv | create_db_import
+fi
+#
