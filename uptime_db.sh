@@ -7,12 +7,13 @@ SCRIPT_VERSION="0.2.0"
 #
 show_help() {
 cat <<_EOF_
-Usage: ./uptime_db [-hveu]
+Usage: ./uptime_db [-hv]
 -h,    -help,           --help                    Display help
+-v,    -version,        --version                 Show version
 _EOF_
 }
 #
-options=$(getopt -l "help" -o "h" -a -- "$@")
+options=$(getopt -l "help,version" -o "hv" -a -- "$@")
 #
 eval set -- "$options"
 # 
@@ -23,6 +24,19 @@ do
     if [ '--help' = "$var" -o '-help' = "$var" -o '-h' = "$var" ]; then
         show_help;
         exit 0;
+    fi
+done
+# 
+for var in "$@"
+do 
+    if [ '--version' = "$var" -o '-version' = "$var" -o '-v' = "$var" ]; then
+        if [ "$#" -gt 2 ]; then
+            show_help;
+            exit 0;
+        else
+            echo "uptime_db $SCRIPT_VERSION";
+            exit 0;
+        fi
     fi
 done
 # 
