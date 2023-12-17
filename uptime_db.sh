@@ -9,15 +9,16 @@ show_all_tables_flag=0;
 #
 show_help() {
 cat <<_EOF_
-Usage: ./uptime_db [-h | -v] [-et]
+Usage: ./uptime_db [-h | -v | -s] [-et]
 -e,    -errors,         --errors                  Show all errors
 -h,    -help,           --help                    Display help
+-s,    -sversion        --sversion                Show schema version
 -t,    -tables,         --tables                  Display tables and views
 -v,    -version,        --version                 Show version
 _EOF_
 }
 #
-options=$(getopt -l "errors,help,tables,version" -o "ehtv" -a -- "$@")
+options=$(getopt -l "errors,help,sversion,tables,version" -o "ehstv" -a -- "$@")
 #
 eval set -- "$options"
 #
@@ -42,6 +43,19 @@ do
     fi
 done
 # 
+for var in "$@"
+do 
+    if [ '--sversion' = "$var" -o '-sversion' = "$var" -o '-s' = "$var" ]; then
+        if [ "$#" -gt 2 ]; then
+            show_help;
+            exit 0;
+        else
+            sqlite3 wtmp.db3 <<<"PRAGMA schema_version";
+            exit 0;
+        fi
+    fi
+done
+#
 while true
 do
 case "$1" in
